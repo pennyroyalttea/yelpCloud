@@ -10,16 +10,11 @@ import io
 import time
 from torch import cuda
 from torchvision import models as tmodels
-
+from torch import nn
 from PIL import Image as PilImage
 import requests, os
 from io import BytesIO
-
-# import fastai stuff
-from fastai import *
-from fastai.vision import *
-import fastai
-from fastai.imports import *
+import numpy as np
 # import settings
 from settings import * # importx
 import torch
@@ -33,18 +28,18 @@ def make_dirs(labels, data_dir):
         for each in labels:
             os.makedirs(os.path.join(name, each), exist_ok=True)
 make_dirs(labels=labels, data_dir=data_dir) # comes from settings.py
-path = Path(data_dir)
+path = data_dir
 
 # download model weights if not already saved
 path_to_model = os.path.join(data_dir, 'models', 'model.pt')
 if not os.path.exists(path_to_model):
     print('done!\nmodel weights were not found, downloading them...')
     os.makedirs(os.path.join(data_dir, 'models'), exist_ok=True)
-    filename = Path(path_to_model)
+    filename = path_to_model
     r = requests.get(MODEL_URL)
     filename.write_bytes(r.content)
 print('done!\nloading up the saved model weights...')
-defaults.device = torch.device('cpu') # run inference on cpu
+#defaults.device = torch.device('cpu') # run inference on cpu
 #empty_data = ImageDataBunch.single_from_classes(
 #    path, labels, ds_tfms=get_transforms(), size=224).normalize(imagenet_stats)
 #learn = create_cnn(empty_data, models.vgg16_bn)
@@ -58,9 +53,9 @@ for param in model.parameters():
 n_inputs = model.classifier[6].in_features #get number of inputs on the layer
 print(n_inputs)
 # Add on classifier
-model.classifier[6] = nn.Sequential(
-    nn.Linear(n_inputs, 256), nn.ReLU(), nn.Dropout(0.3),
-    nn.Linear(256, n_classes), nn.LogSoftmax(dim=1))
+model.classifier[6] = torch.nn.Sequential(
+    nn.Linear(n_inputs, 256), torch.nn.ReLU(), nn.Dropout(0.3),
+    nn.Linear(256, n_classes), torch.nn.LogSoftmax(dim=1))
 model.idx_to_class = {
     0: "drink",
     1: "food",
@@ -176,7 +171,7 @@ def predict():
     app.logger.info("Execution time: %0.02f seconds" % (dt))
     #app.logger.info("Image %s classified as %s" % (url, top_classes))
     display = 'Class: %s' % top_classes
-    out = 'Score: %0.02f' % top_p
+    out = 'Score: %0.09f' % top_p
     return jsonify("" + display + " " + out)
 if __name__ == '__main__':
     app.run(host="0.0.0.0", debug=True, port=PORT)
