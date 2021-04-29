@@ -37,7 +37,8 @@ if not os.path.exists(path_to_model):
     os.makedirs(os.path.join(data_dir, 'models'), exist_ok=True)
     filename = path_to_model
     r = requests.get(MODEL_URL)
-    filename.write_bytes(r.content)
+    with open(filename, "wb") as f:
+        f.write(r.content)
 print('done!\nloading up the saved model weights...')
 #defaults.device = torch.device('cpu') # run inference on cpu
 #empty_data = ImageDataBunch.single_from_classes(
